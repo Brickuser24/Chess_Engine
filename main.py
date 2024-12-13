@@ -367,10 +367,12 @@ def check_legal(board,turn):
         for i in (-9,-7):
             if file<= index + i <=file + 7:
                 if board.board[index+i] in "kp":
+                    print("King/Pawn found")
                     return False
         for i in (-8,-1,+1,+7,+8,+9):
             if file<= index + i <=file + 7:
                 if board.board[index+i] == "k":
+                    print("King found")
                     return False
         rank = index//8
         file = index%8
@@ -381,6 +383,7 @@ def check_legal(board,turn):
             if 0<= new_file <=7 and 0<= new_rank <=7:
                 target = new_file + new_rank*8
                 if board.board[target]== "n":
+                    print("Knight found")
                     return False
         directions = [[1,1],[1,-1],[-1,1],[-1,-1]]
         for d in directions:
@@ -390,6 +393,7 @@ def check_legal(board,turn):
                 if 0<= new_file <=7 and 0<= new_rank <=7:
                     target = new_file + new_rank*8
                     if board.board[target] in "bq":
+                        print("Queen/Bishop found")
                         return False
                     elif board.board[target].isupper():
                         break
@@ -401,7 +405,7 @@ def check_legal(board,turn):
                 if 0<= new_file <=7 and 0<= new_rank <=7:
                     target = new_file + new_rank*8
                     if board.board[target] in "rq":
-                        return False
+                        return print("Rook/Queen found")
                     elif board.board[target].isupper():
                         break
     else:
@@ -410,10 +414,12 @@ def check_legal(board,turn):
         for i in (+9,+7):
             if file<= index + i <=file + 7:
                 if board.board[index+i] in "KP":
+                    print("King/Pawn found")
                     return False
         for i in (-8,-1,+1,+7,+8,+9):
             if file<= index + i <=file + 7:
                 if board.board[index+i] == "K":
+                    print("King found")
                     return False
         rank = index//8
         file = index%8
@@ -424,6 +430,7 @@ def check_legal(board,turn):
             if 0<= new_file <=7 and 0<= new_rank <=7:
                 target = new_file + new_rank*8
                 if board.board[target]== "N":
+                    print("Knight found")
                     return False
         directions = [[1,1],[1,-1],[-1,1],[-1,-1]]
         for d in directions:
@@ -433,8 +440,9 @@ def check_legal(board,turn):
                 if 0<= new_file <=7 and 0<= new_rank <=7:
                     target = new_file + new_rank*8
                     if board.board[target] in "BQ":
+                        print("B/Q found")
                         return False
-                    elif board.board[target].isupper():
+                    elif board.board[target].islower():
                         break
         directions = [[1,0],[-1,0],[0,1],[0,-1]]
         for d in directions:
@@ -444,8 +452,9 @@ def check_legal(board,turn):
                 if 0<= new_file <=7 and 0<= new_rank <=7:
                     target = new_file + new_rank*8
                     if board.board[target] in "RQ":
+                        print("R/Q found")
                         return False
-                    elif board.board[target].isupper():
+                    elif board.board[target].islower():
                         break
         
         return True
@@ -453,7 +462,7 @@ def check_legal(board,turn):
             
 
 
-board = Board("r1bqkbnr/pppppppp/2n5/8/Q7/2P5/PP1PPPPP/RNB1KBNR b KQkq - 2 2")
+board = Board("r1bqkbnr/pppppppp/2n5/8/8/2P5/PP1PPPPP/RNBQKBNR w KQkq - 1 2")
 
 
 #FEN GENERATION
@@ -511,7 +520,7 @@ def perft(position,depth):
         make_move(test_board,move,turn)
         result = check_legal(test_board,turn)
         if result is False:
-            return 0
+            continue
         nodes += perft(test_board, depth - 1)
     
     return nodes
@@ -545,14 +554,16 @@ for move in moves:
                             board.moves_since_capture
                             )
     make_move(test_board,move,"W" if board.white_to_move else "B")
-    num = perft(test_board,3)
+    num = perft(test_board,1)
     nodes += num
     print(f"{d[move.start_sq]}{d[move.end_sq]}: {num}")
 print(nodes)
 
 
-# moves = get_legal_moves(board,"W")
 
+#CHECK LEGAL MOVE FUNCTION TESTING
+
+# moves = get_legal_moves(board,"B")
 # for move in moves:
 #     test_board = Board (None, 
 #                             board.board.copy(),
@@ -566,8 +577,7 @@ print(nodes)
 #                             board.en_passant,
 #                             board.moves_since_capture
 #                             )
-#     make_move(test_board,move,"W")
-#     a = check_legal(test_board,"W")
+#     make_move(test_board,move,"B")
+#     a = check_legal(test_board,"B")
 #     if a is False:
 #         print(f"{d[move.start_sq]}{d[move.end_sq]}")
-
