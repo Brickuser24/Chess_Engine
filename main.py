@@ -1,4 +1,25 @@
 import numpy as np
+import time as t
+
+#NOTES
+#CODE CASTLING MOVEMENT
+# What seems easier to understand and less likely to go wrong if you mistype something?
+# Move(33, 49, "Double Push") or Move("b2", "b4", "Double Push")?
+# if 8<= index <=15 and board[target+8] == ".": or if row(index) == 2 and is_empty(board, target+8):?
+
+#row() and is_empty() are user defined functions to do task and make it easier to write/read
+
+
+square_to_index = {
+  "a8": 0, "b8": 1, "c8": 2, "d8": 3, "e8": 4, "f8": 5, "g8": 6, "h8": 7,
+  "a7": 8, "b7": 9, "c7": 10, "d7": 11, "e7": 12, "f7": 13, "g7": 14, "h7": 15,
+  "a6": 16, "b6": 17, "c6": 18, "d6": 19, "e6": 20, "f6": 21, "g6": 22, "h6": 23,
+  "a5": 24, "b5": 25, "c5": 26, "d5": 27, "e5": 28, "f5": 29, "g5": 30, "h5": 31,
+  "a4": 32, "b4": 33, "c4": 34, "d4": 35, "e4": 36, "f4": 37, "g4": 38, "h4": 39,
+  "a3": 40, "b3": 41, "c3": 42, "d3": 43, "e3": 44, "f3": 45, "g3": 46, "h3": 47,
+  "a2": 48, "b2": 49, "c2": 50, "d2": 51, "e2": 52, "f2": 53, "g2": 54, "h2": 55,
+  "a1": 56, "b1": 57, "c1": 58, "d1": 59, "e1": 60, "f1": 61, "g1": 62, "h1": 63
+}
 
 class Board():
     def __init__(self,fen = None,board = None,white_to_move = None,white_king_moved = None,
@@ -41,7 +62,7 @@ class Board():
             self.black_kingside_rook_moved = False if black_kingside_rook_moved is None else black_kingside_rook_moved
             self.black_queenside_rook_moved = False if black_queenside_rook_moved is None else black_queenside_rook_moved
 
-            self.en_passant = None if en_passant is None else en_passant
+            self.en_passant = en_passant
             
             self.moves_since_capture = 0 if moves_since_capture is None else moves_since_capture
         
@@ -71,7 +92,7 @@ class Board():
             self.black_kingside_rook_moved = False if "k" in fields[2] else True
             self.black_queenside_rook_moved = False if "q" in fields[2] else True
             #Needs to be properly coded
-            self.en_passant = None
+            self.en_passant = square_to_index[fields[3]] if fields[3] != "-" else None
             self.moves_since_capture = int(fields[4])
 
 class Move():
@@ -121,7 +142,7 @@ def get_pawn_moves(board,index,color):
             if board[target] == ".":
                 legal_moves.append(Move(index,target,"Push"))
                 if 8<= index <=15 and board[target+8] == ".":
-                    legal_moves.append(Move(index,target+8,"Push"))
+                    legal_moves.append(Move(index,target+8,"Double_Push"))
             file = (target//8)*8
             for i in [1,-1]:
                 if file<= target+i <=file+7:
@@ -282,16 +303,16 @@ def en_passant(board,turn):
         square = board.en_passant
         file = (square//8)*8
         if turn =="W":
-            for i in (1,-1):
-                if file<= square+i <= file+7:
+            for i in (7,9):
+                if file+8<= square+i <= file+15:
                     if board.board[square+i] == "P":
-                        legal_moves.append(Move(square+i,square-8,"EnPassant"))
+                        legal_moves.append(Move(square+i,square,"EnPassant"))
                        
         else:
-            for i in (1,-1):
-                if file<= square+i <= file+7:
-                    if board.board[square+i] == "P":
-                        legal_moves.append(Move(square+i,square+8,"EnPassant"))
+            for i in (-7,-9):
+                if file-8<= square+i <= file-1:
+                    if board.board[square+i] == "p":
+                        legal_moves.append(Move(square+i,square,"EnPassant"))
 
     return legal_moves
 
@@ -339,8 +360,8 @@ def get_legal_moves(board,turn):
 def make_move(board,move,turn):
     board.board[move.end_sq] = board.board[move.start_sq]
     board.board[move.start_sq] = "."
-    board.en_passant = None
     if turn == "W":
+        board.en_passant = move.end_sq+8 if move.type =="Double_Push" else None
         if board.board[56] != "R":
             board.white_queenside_rook_moved = True 
         if board.board[63] !="R":
@@ -348,6 +369,7 @@ def make_move(board,move,turn):
         if board.board[60] != "K":
             board.white_king_moved = True 
     else:
+        board.en_passant = move.end_sq-8 if move.type =="Double_Push" else None
         if board.board[0] != "R":
             board.black_queenside_rook_moved = True 
         if board.board[7] !="R":
@@ -364,7 +386,7 @@ def check_legal(board,turn):
         index = np.argmax(board.board == "K")
         file = (index//8)*8
         for i in (-9,-7):
-            if file<= index + i <=file + 7:
+            if file-8<= index + i <=file + 1:
                 if board.board[index+i] in "kp":
                     return False
         for i in (-8,-1,+1,+7,+8,+9):
@@ -407,7 +429,7 @@ def check_legal(board,turn):
         index = np.argmax(board.board == "k")
         file = (index//8)*8
         for i in (+9,+7):
-            if file<= index + i <=file + 7:
+            if file+8<= index + i <=file + 15:
                 if board.board[index+i] in "KP":
                     return False
         for i in (-8,-1,+1,+7,+8,+9):
@@ -453,7 +475,7 @@ def check_legal(board,turn):
             
 
 
-board = Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+board = Board()
 
 
 #FEN GENERATION
@@ -511,7 +533,6 @@ def perft(position,depth):
         make_move(test_board,move,turn)
         result = check_legal(test_board,turn)
         if result is False:
-            print(move.start_sq,move.end_sq)
             continue
         nodes += perft(test_board, depth - 1)
     
@@ -549,7 +570,7 @@ for move in moves:
     result = check_legal(test_board,"W" if board.white_to_move else "B")
     if result is False:
         continue
-    num = perft(test_board,4)
+    num = perft(test_board,5)
     nodes += num
     print(f"{d[move.start_sq]}{d[move.end_sq]}: {num}")
 print(nodes)
