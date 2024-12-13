@@ -1,5 +1,4 @@
 import numpy as np
-import random
 
 class Board():
     def __init__(self,fen = None,board = None,white_to_move = None,white_king_moved = None,
@@ -367,12 +366,10 @@ def check_legal(board,turn):
         for i in (-9,-7):
             if file<= index + i <=file + 7:
                 if board.board[index+i] in "kp":
-                    print("King/Pawn found")
                     return False
         for i in (-8,-1,+1,+7,+8,+9):
             if file<= index + i <=file + 7:
                 if board.board[index+i] == "k":
-                    print("King found")
                     return False
         rank = index//8
         file = index%8
@@ -383,7 +380,6 @@ def check_legal(board,turn):
             if 0<= new_file <=7 and 0<= new_rank <=7:
                 target = new_file + new_rank*8
                 if board.board[target]== "n":
-                    print("Knight found")
                     return False
         directions = [[1,1],[1,-1],[-1,1],[-1,-1]]
         for d in directions:
@@ -393,9 +389,8 @@ def check_legal(board,turn):
                 if 0<= new_file <=7 and 0<= new_rank <=7:
                     target = new_file + new_rank*8
                     if board.board[target] in "bq":
-                        print("Queen/Bishop found")
                         return False
-                    elif board.board[target].isupper():
+                    elif board.board[target] != ".":
                         break
         directions = [[1,0],[-1,0],[0,1],[0,-1]]
         for d in directions:
@@ -405,8 +400,8 @@ def check_legal(board,turn):
                 if 0<= new_file <=7 and 0<= new_rank <=7:
                     target = new_file + new_rank*8
                     if board.board[target] in "rq":
-                        return print("Rook/Queen found")
-                    elif board.board[target].isupper():
+                        return False
+                    elif board.board[target] != ".":
                         break
     else:
         index = np.argmax(board.board == "k")
@@ -414,12 +409,10 @@ def check_legal(board,turn):
         for i in (+9,+7):
             if file<= index + i <=file + 7:
                 if board.board[index+i] in "KP":
-                    print("King/Pawn found")
                     return False
         for i in (-8,-1,+1,+7,+8,+9):
             if file<= index + i <=file + 7:
                 if board.board[index+i] == "K":
-                    print("King found")
                     return False
         rank = index//8
         file = index%8
@@ -430,7 +423,6 @@ def check_legal(board,turn):
             if 0<= new_file <=7 and 0<= new_rank <=7:
                 target = new_file + new_rank*8
                 if board.board[target]== "N":
-                    print("Knight found")
                     return False
         directions = [[1,1],[1,-1],[-1,1],[-1,-1]]
         for d in directions:
@@ -440,9 +432,8 @@ def check_legal(board,turn):
                 if 0<= new_file <=7 and 0<= new_rank <=7:
                     target = new_file + new_rank*8
                     if board.board[target] in "BQ":
-                        print("B/Q found")
                         return False
-                    elif board.board[target].islower():
+                    elif board.board[target] != ".":
                         break
         directions = [[1,0],[-1,0],[0,1],[0,-1]]
         for d in directions:
@@ -452,17 +443,17 @@ def check_legal(board,turn):
                 if 0<= new_file <=7 and 0<= new_rank <=7:
                     target = new_file + new_rank*8
                     if board.board[target] in "RQ":
-                        print("R/Q found")
                         return False
-                    elif board.board[target].islower():
+                    elif board.board[target] != ".":
                         break
         
         return True
+    
                         
             
 
 
-board = Board("r1bqkbnr/pppppppp/2n5/8/8/2P5/PP1PPPPP/RNBQKBNR w KQkq - 1 2")
+board = Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
 
 
 #FEN GENERATION
@@ -520,6 +511,7 @@ def perft(position,depth):
         make_move(test_board,move,turn)
         result = check_legal(test_board,turn)
         if result is False:
+            print(move.start_sq,move.end_sq)
             continue
         nodes += perft(test_board, depth - 1)
     
@@ -554,7 +546,10 @@ for move in moves:
                             board.moves_since_capture
                             )
     make_move(test_board,move,"W" if board.white_to_move else "B")
-    num = perft(test_board,1)
+    result = check_legal(test_board,"W" if board.white_to_move else "B")
+    if result is False:
+        continue
+    num = perft(test_board,4)
     nodes += num
     print(f"{d[move.start_sq]}{d[move.end_sq]}: {num}")
 print(nodes)
@@ -581,3 +576,10 @@ print(nodes)
 #     a = check_legal(test_board,"B")
 #     if a is False:
 #         print(f"{d[move.start_sq]}{d[move.end_sq]}")
+
+
+# May be helpful for debugging
+# def print_board(b):
+#     for row in range(8):
+#         print(b.board[row*8:(row+1)*8])
+#     print()
