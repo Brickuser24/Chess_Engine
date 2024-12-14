@@ -1,16 +1,8 @@
 import numpy as np
+import time as t
 
-#NOTES
-# What seems easier to understand and less likely to go wrong if you mistype something?
-# Move(33, 49, "Double Push") or Move("b2", "b4", "Double Push")?
-# if 8<= index <=15 and board[target+8] == ".": or if row(index) == 2 and is_empty(board, target+8):?
-
-#row() and is_empty() are user defined functions to do task and make it easier to write/read
-
-#Start Position tested till depth 4
-
-#Kiwipete Position tested till depth 4
-
+#Note
+#ADD PROMOTIONS IN MAKE MOVE
 
 square_to_index = {
   "a8": 0, "b8": 1, "c8": 2, "d8": 3, "e8": 4, "f8": 5, "g8": 6, "h8": 7,
@@ -21,6 +13,17 @@ square_to_index = {
   "a3": 40, "b3": 41, "c3": 42, "d3": 43, "e3": 44, "f3": 45, "g3": 46, "h3": 47,
   "a2": 48, "b2": 49, "c2": 50, "d2": 51, "e2": 52, "f2": 53, "g2": 54, "h2": 55,
   "a1": 56, "b1": 57, "c1": 58, "d1": 59, "e1": 60, "f1": 61, "g1": 62, "h1": 63
+}
+
+index_to_square = {
+    0: "a8", 1: "b8", 2: "c8", 3: "d8", 4: "e8", 5: "f8", 6: "g8", 7: "h8",
+    8: "a7", 9: "b7", 10: "c7", 11: "d7", 12: "e7", 13: "f7", 14: "g7", 15: "h7",
+    16: "a6", 17: "b6", 18: "c6", 19: "d6", 20: "e6", 21: "f6", 22: "g6", 23: "h6",
+    24: "a5", 25: "b5", 26: "c5", 27: "d5", 28: "e5", 29: "f5", 30: "g5", 31: "h5",
+    32: "a4", 33: "b4", 34: "c4", 35: "d4", 36: "e4", 37: "f4", 38: "g4", 39: "h4",
+    40: "a3", 41: "b3", 42: "c3", 43: "d3", 44: "e3", 45: "f3", 46: "g3", 47: "h3",
+    48: "a2", 49: "b2", 50: "c2", 51: "d2", 52: "e2", 53: "f2", 54: "g2", 55: "h2",
+    56: "a1", 57: "b1", 58: "c1", 59: "d1", 60: "e1", 61: "f1", 62: "g1", 63: "h1"
 }
 
 class Board():
@@ -49,9 +52,6 @@ class Board():
             # ".",".",".",".",".",".",".",".",        # 40 41 42 43 44 45 46 47
             # "P","P","P","P","P","P","P","P",        # 48 49 50 51 52 53 54 55
             # "R","N","B","Q","K","B","N","R"         # 56 57 58 59 60 61 62 63
-            #Difference along diagonal = 9
-            #Difference along files    = 1
-            #Difference along ranks    = 8
 
             self.white_to_move = True if white_to_move is None else white_to_move
 
@@ -95,68 +95,108 @@ class Board():
             self.black_king_moved = False if "k" in fields[2] or "q" in fields[2] else True
             self.black_kingside_rook_moved = False if "k" in fields[2] else True
             self.black_queenside_rook_moved = False if "q" in fields[2] else True
-            #Needs to be properly coded
             self.en_passant = square_to_index[fields[3]] if fields[3] != "-" else None
             self.moves_since_capture = int(fields[4])
             self.in_check = False
 
 class Move():
-    def __init__(self,start_sq,end_sq,type,promote_to = None):
+    def __init__(self,start_sq,end_sq,type,promote_to = ""):
         self.start_sq = start_sq
         self.end_sq = end_sq
         self.type = type
         self.promote_to = promote_to
 
-def get_pawn_moves(board,index,color):
+def row(index):
+    if 0<= index <= 7:
+        return 1
+    elif 8<= index <= 15:
+        return 2
+    elif 16<= index <= 23:
+        return 3
+    elif 24<= index <= 31:
+        return 4
+    elif 32<= index <= 39:
+        return 5
+    elif 40<= index <= 47:
+        return 6
+    elif 48<= index <= 55:
+        return 7
+    else:
+        return 8
+
+def get_pawn_moves(board,index):
     legal_moves = []
-    if color == "W": 
+    if board.white_to_move: 
         target = index - 8
-        if 1<= target <=7:
-            if board[target] == ".":
+        if row(target) == 1:
+            if board.board[target] == ".":
                 for piece in ["N","B","R","Q"]:
                     legal_moves.append(Move(index,target,"Promotion",piece))
-            file = (target//8)*8
+            rank = row((target//8)*8)
             for i in [1,-1]:
-                if file<= target+i <=file+7:
-                    if board[target+i].islower():
-                        for piece in ["N","B","R","Q"]:
-                            legal_moves.append(Move(index,target+i,"Promotion",piece))
+                if 0<= target+i <=63:
+                    if row(target+i) == rank:
+                        if board.board[target+i].islower():
+                            for piece in ["N","B","R","Q"]:
+                                legal_moves.append(Move(index,target+i,"Promotion",piece))
         else:
-            if board[target] == ".":
+            if board.board[target] == ".":
                 legal_moves.append(Move(index,target,"Push"))
-                if 48<= index <=55 and board[target-8] == ".":
+                if row(index) == 7 and board.board[target-8] == ".":
                     legal_moves.append(Move(index,target-8,"Double_Push"))
-            file = (target//8)*8
+            rank = row((target//8)*8)
             for i in [1,-1]:
-                if file<= target+i <=file+7:
-                    if board[target+i].islower():
-                        legal_moves.append(Move(index,target+i,"Capture"))
+                if 0<= target+i <=63:
+                    if row(target+i) == rank:
+                        if board.board[target+i].islower():
+                            legal_moves.append(Move(index,target+i,"Capture"))
     else:
         target = index + 8
-        if 56<= target <=63:
-            if board[target] == ".":
-                for piece in ["N","B","R","Q"]:
+        if row(target) == 8:
+            if board.board[target] == ".":
+                for piece in ["n","b","r","q"]:
                     legal_moves.append(Move(index,target,"Promotion",piece))
-            file = (target//8)*8
+            rank = row((target//8)*8)
             for i in [1,-1]:
-                if file<= target+i <=file+7:
-                    if board[target+i].isupper():
-                        for piece in ["N","B","R","Q"]:
-                            legal_moves.append(Move(index,target+i,"Promotion",piece))
+                if 0<= target+i <=63:
+                    if row(target+i) == rank:
+                        if board.board[target+i].isupper():
+                            for piece in ["n","b","r","q"]:
+                                legal_moves.append(Move(index,target+i,"Promotion",piece))
         else:
-            if board[target] == ".":
+            if board.board[target] == ".":
                 legal_moves.append(Move(index,target,"Push"))
-                if 8<= index <=15 and board[target+8] == ".":
+                if row(index) == 2 and board.board[target+8] == ".":
                     legal_moves.append(Move(index,target+8,"Double_Push"))
-            file = (target//8)*8
+            rank = row((target//8)*8)
             for i in [1,-1]:
-                if file<= target+i <=file+7:
-                    if board[target+i].isupper():
-                        legal_moves.append(Move(index,target+i,"Capture"))
+                if 0<= target+i <=63:
+                    if row(target+i) == rank:
+                        if board.board[target+i].isupper():
+                            legal_moves.append(Move(index,target+i,"Capture"))
     
     return legal_moves
 
-def get_knight_moves(board,index,color):
+def en_passant(board):
+    legal_moves = []
+    if board.en_passant is not None:
+        square = board.en_passant
+        file = (square//8)*8
+        if board.white_to_move:
+            for i in (7,9):
+                if row(file+8) == row(square+i):
+                    if board.board[square+i] == "P":
+                        legal_moves.append(Move(square+i,square,"EnPassant"))
+                       
+        else:
+            for i in (-7,-9):
+                if row(file-8) == row(square+i):
+                    if board.board[square+i] == "p":
+                        legal_moves.append(Move(square+i,square,"EnPassant"))
+
+    return legal_moves
+
+def get_knight_moves(board,index):
     legal_moves = []
     file = index%8
     rank = index//8
@@ -166,19 +206,19 @@ def get_knight_moves(board,index,color):
         new_rank = rank + d[1]
         if 0<= new_file <=7 and 0<= new_rank <=7:
             target = new_file + new_rank*8
-            if board[target]!= ".":
-                if color == "W":
-                    if board[target].islower():
+            if board.board[target]!= ".":
+                if board.white_to_move:
+                    if board.board[target].islower():
                         legal_moves.append(Move(index,target,"Capture"))
                 else:
-                     if board[target].isupper():
+                     if board.board[target].isupper():
                         legal_moves.append(Move(index,target,"Capture"))
             else:
                 legal_moves.append(Move(index,target,"Push"))
 
     return legal_moves
 
-def get_bishop_moves(board,index,color):
+def get_bishop_moves(board,index):
     legal_moves = []
     file = index%8
     rank = index//8
@@ -189,13 +229,13 @@ def get_bishop_moves(board,index,color):
             new_rank = rank + d[1]*i
             if 0<= new_file <=7 and 0<= new_rank <=7:
                 target = new_file + new_rank*8
-                if board[target]!= ".":
-                    if color == "W":
-                        if board[target].islower():
+                if board.board[target]!= ".":
+                    if board.white_to_move:
+                        if board.board[target].islower():
                             legal_moves.append(Move(index,target,"Capture"))
                         break
                     else:
-                        if board[target].isupper():
+                        if board.board[target].isupper():
                             legal_moves.append(Move(index,target,"Capture"))
                         break 
                 else:
@@ -205,7 +245,7 @@ def get_bishop_moves(board,index,color):
     
     return legal_moves
 
-def get_rook_moves(board,index,color):
+def get_rook_moves(board,index):
     legal_moves = []
     file = index%8
     rank = index//8
@@ -216,13 +256,13 @@ def get_rook_moves(board,index,color):
             new_rank = rank + d[1]*i
             if 0<= new_file <=7 and 0<= new_rank <=7:
                 target = new_file + new_rank*8
-                if board[target]!= ".":
-                    if color == "W":
-                        if board[target].islower():
+                if board.board[target]!= ".":
+                    if board.white_to_move:
+                        if board.board[target].islower():
                             legal_moves.append(Move(index,target,"Capture"))
                         break
                     else:
-                        if board[target].isupper():
+                        if board.board[target].isupper():
                             legal_moves.append(Move(index,target,"Capture"))
                         break 
                 else:
@@ -232,7 +272,7 @@ def get_rook_moves(board,index,color):
 
     return legal_moves
 
-def get_queen_moves(board,index,color):
+def get_queen_moves(board,index):
     legal_moves = []
     file = index%8
     rank = index//8
@@ -243,13 +283,13 @@ def get_queen_moves(board,index,color):
             new_rank = rank + d[1]*i
             if 0<= new_file <=7 and 0<= new_rank <=7:
                 target = new_file + new_rank*8
-                if board[target]!= ".":
-                    if color == "W":
-                        if board[target].islower():
+                if board.board[target]!= ".":
+                    if board.white_to_move:
+                        if board.board[target].islower():
                             legal_moves.append(Move(index,target,"Capture"))
                         break
                     else:
-                        if board[target].isupper():
+                        if board.board[target].isupper():
                             legal_moves.append(Move(index,target,"Capture"))
                         break 
                 else:
@@ -259,7 +299,7 @@ def get_queen_moves(board,index,color):
 
     return legal_moves
 
-def get_king_moves(board,index,color):
+def get_king_moves(board,index):
     legal_moves = []
     file = index%8
     rank = index//8
@@ -269,23 +309,23 @@ def get_king_moves(board,index,color):
         new_rank = rank + d[1]
         if 0<= new_file <=7 and 0<= new_rank <=7:
             target = new_file + new_rank*8
-            if board[target]!= ".":
-                if color == "W":
-                    if board[target].islower():
+            if board.board[target]!= ".":
+                if board.white_to_move:
+                    if board.board[target].islower():
                         legal_moves.append(Move(index,target,"Capture"))
                 else:
-                     if board[target].isupper():
+                     if board.board[target].isupper():
                         legal_moves.append(Move(index,target,"Capture")) 
             else:
                 legal_moves.append(Move(index,target,"Push"))
 
     return legal_moves
-    
-def castling(board,turn):
+
+def castling(board):
     legal_moves = []
     if board.in_check:
         return legal_moves
-    if turn == "W":
+    if board.white_to_move:
         if board.white_king_moved is False:
             #Kingside Castling Check
             if board.white_kingside_rook_moved is False and board.board[61] == "." and board.board[62] == ".":
@@ -304,68 +344,52 @@ def castling(board,turn):
     
     return legal_moves
 
-def en_passant(board,turn):
+def get_legal_moves(board):
     legal_moves = []
-    if board.en_passant is not None:
-        square = board.en_passant
-        file = (square//8)*8
-        if turn =="W":
-            for i in (7,9):
-                if file+8<= square+i <= file+15:
-                    if board.board[square+i] == "P":
-                        legal_moves.append(Move(square+i,square,"EnPassant"))
-                       
-        else:
-            for i in (-7,-9):
-                if file-8<= square+i <= file-1:
-                    if board.board[square+i] == "p":
-                        legal_moves.append(Move(square+i,square,"EnPassant"))
-
-    return legal_moves
-
-def get_legal_moves(board,turn):
-    legal_moves = []
-    if turn == "W":
+    if board.white_to_move:
         for index in range(len(board.board)):
             if board.board[index]!= "." and board.board[index].isupper():
                 piece = board.board[index]
                 if piece =="P":
-                    legal_moves.extend(get_pawn_moves(board.board,index,turn))
+                    legal_moves.extend(get_pawn_moves(board,index))
                 elif piece =="N":
-                    legal_moves.extend(get_knight_moves(board.board,index,turn))
+                    legal_moves.extend(get_knight_moves(board,index))
                 elif piece =="B":
-                    legal_moves.extend(get_bishop_moves(board.board,index,turn))
+                    legal_moves.extend(get_bishop_moves(board,index))
                 elif piece =="R":
-                    legal_moves.extend(get_rook_moves(board.board,index,turn))
+                    legal_moves.extend(get_rook_moves(board,index))
                 elif piece =="Q":
-                    legal_moves.extend(get_queen_moves(board.board,index,turn))
+                    legal_moves.extend(get_queen_moves(board,index))
                 else:
-                    legal_moves.extend(get_king_moves(board.board,index,turn))
+                    legal_moves.extend(get_king_moves(board,index))
 
     else:
         for index in range(len(board.board)):
             if board.board[index]!= "." and board.board[index].islower():
                 piece = board.board[index]
                 if piece =="p":
-                    legal_moves.extend(get_pawn_moves(board.board,index,turn))
+                    legal_moves.extend(get_pawn_moves(board,index))
                 elif piece =="n":
-                    legal_moves.extend(get_knight_moves(board.board,index,turn))
+                    legal_moves.extend(get_knight_moves(board,index))
                 elif piece =="b":
-                    legal_moves.extend(get_bishop_moves(board.board,index,turn))
+                    legal_moves.extend(get_bishop_moves(board,index))
                 elif piece =="r":
-                    legal_moves.extend(get_rook_moves(board.board,index,turn))
+                    legal_moves.extend(get_rook_moves(board,index))
                 elif piece =="q":
-                    legal_moves.extend(get_queen_moves(board.board,index,turn))
+                    legal_moves.extend(get_queen_moves(board,index))
                 else:
-                    legal_moves.extend(get_king_moves(board.board,index,turn))
+                    legal_moves.extend(get_king_moves(board,index))
 
-    legal_moves.extend(castling(board,turn))
-    legal_moves.extend(en_passant(board,turn))
+    legal_moves.extend(castling(board))
+    legal_moves.extend(en_passant(board))
     
     return legal_moves
 
-def make_move(board,move,turn):
-    board.board[move.end_sq] = board.board[move.start_sq]
+def make_move(board,move):
+    if move.type == "Promotion":
+        board.board[move.end_sq] = move.promote_to
+    else:
+        board.board[move.end_sq] = board.board[move.start_sq]
     board.board[move.start_sq] = "."
     if move.type == "Castling":
         if move.end_sq == 62:
@@ -381,11 +405,11 @@ def make_move(board,move,turn):
             board.board[0] = "."
             board.board[3] = "r"
     if move.type == "EnPassant":
-        if turn == "W":
+        if board.white_to_move:
             board.board[move.end_sq+8] = "."
         else:
             board.board[move.end_sq-8] = "."
-    if turn == "W":
+    if board.white_to_move:
         board.en_passant = move.end_sq+8 if move.type =="Double_Push" else None
     else:
         board.en_passant = move.end_sq-8 if move.type =="Double_Push" else None
@@ -404,26 +428,40 @@ def make_move(board,move,turn):
 
     board.white_to_move = False if board.white_to_move else True
     board.moves_since_capture = 0 if move.type == "Capture" else board.moves_since_capture + 1
-    
-def check_legal(board,turn,move):
+
+def check_legal(board,move):
     if move.type == "Castling":
-        if turn == "W":
+        if board.white_to_move is False:
             if move.end_sq == 62:
                 checks = [61,62]
             else:
-                checks = [57,58,59]
+                checks = [58,59]
             for index in checks:
-                file = (index//8)*8
-                for i in (-9,-7):
-                    if file-8<= index + i <=file + 1:
-                        if board.board[index+i] in "kp":
-                            return False
-                for i in (-8,-1,+1,+7,+8,+9):
-                    if file<= index + i <=file + 7:
-                        if board.board[index+i] == "k":
-                            return False
-                rank = index//8
                 file = index%8
+                if row(index) != 1:
+                    for i in (-9,-7):
+                        if row(index+i) == row(index-8) and index+i >-1:
+                            if board.board[index+i] in "kp":
+                                return False
+                    if board.board[index-8] == "k":
+                        return False
+                    if index < 63:
+                        if row(index+1) == row(index):
+                            if board.board[index+1] == "k":
+                                return False
+                            
+                    if index > 0:
+                        if row(index-1) == row(index):
+                            if board.board[index-1] == "k":
+                                return False
+                if row(index) != 8:
+                    for i in (7,9):
+                        if row(index+i) == row(index+8) and index+i <64:
+                            if board.board[index+i] == "k":
+                                return False
+                    if board.board[index+8] == "k":
+                        return False
+                rank = index//8
                 directions = [[1,2],[1,-2],[-1,2],[-1,-2],[2,1],[2,-1],[-2,1],[-2,-1]]
                 for d in directions:
                     new_file = file + d[0]
@@ -454,23 +492,38 @@ def check_legal(board,turn,move):
                                 return False
                             elif board.board[target] != ".":
                                 break
+                
         else:
             if move.end_sq == 6:
                 checks = [5,6]
             else:
                 checks = [2,3]
             for index in checks:
-                file = (index//8)*8
-                for i in (+9,+7):
-                    if file+8<= index + i <=file + 15:
-                        if board.board[index+i] in "KP":
-                            return False
-                for i in (-8,-1,+1,+7,+8,+9):
-                    if file<= index + i <=file + 7:
-                        if board.board[index+i] == "K":
-                            return False
-                rank = index//8
                 file = index%8
+                if row(index) != 1:
+                    for i in (-9,-7):
+                        if row(index+i) == row(index-8) and index+i >-1:
+                            if board.board[index+i] in "K":
+                                return False
+                    if board.board[index-8] == "K":
+                        return False
+                if index < 63:
+                    if row(index+1) == row(index):
+                        if board.board[index+1] == "K":
+                            return False
+                        
+                if index > 0:
+                    if row(index-1) == row(index):
+                        if board.board[index-1] == "K":
+                            return False
+                if row(index) != 8:
+                    for i in (7,9):
+                        if row(index+i) == row(index+8) and index+i <64:
+                            if board.board[index+i] in "KP":
+                                return False
+                    if board.board[index+8] == "K":
+                        return False
+                rank = index//8
                 directions = [[1,2],[1,-2],[-1,2],[-1,-2],[2,1],[2,-1],[-2,1],[-2,-1]]
                 for d in directions:
                     new_file = file + d[0]
@@ -503,19 +556,34 @@ def check_legal(board,turn,move):
                                 break
 
     #returns True if legal False if illegal
-    if turn == "W":
+    if board.white_to_move is False:
         index = np.argmax(board.board == "K")
-        file = (index//8)*8
-        for i in (-9,-7):
-            if file-8<= index + i <=file + 1:
-                if board.board[index+i] in "kp":
-                    return False
-        for i in (-8,-1,+1,+7,+8,+9):
-            if file<= index + i <=file + 7:
-                if board.board[index+i] == "k":
-                    return False
-        rank = index//8
         file = index%8
+        if row(index) != 1:
+            for i in (-9,-7):
+                if row(index+i) == row(index-8) and index+i > -1:
+                    if board.board[index+i] in "kp":
+                        return False
+            if board.board[index-8] == "k":
+                return False
+            
+        if index < 63:
+            if row(index+1) == row(index):
+                if board.board[index+1] == "k":
+                    return False
+                
+        if index > 0:
+            if row(index-1) == row(index):
+                if board.board[index-1] == "k":
+                    return False
+        if row(index) != 8:
+            for i in (7,9):
+                if row(index+i) == row(index+8) and index+i <64:
+                    if board.board[index+i] == "k":
+                        return False
+            if board.board[index+8] == "k":
+                return False
+        rank = index//8
         directions = [[1,2],[1,-2],[-1,2],[-1,-2],[2,1],[2,-1],[-2,1],[-2,-1]]
         for d in directions:
             new_file = file + d[0]
@@ -546,19 +614,34 @@ def check_legal(board,turn,move):
                         return False
                     elif board.board[target] != ".":
                         break
+
     else:
         index = np.argmax(board.board == "k")
-        file = (index//8)*8
-        for i in (+9,+7):
-            if file+8<= index + i <=file + 15:
-                if board.board[index+i] in "KP":
-                    return False
-        for i in (-8,-1,+1,+7,+8,+9):
-            if file<= index + i <=file + 7:
-                if board.board[index+i] == "K":
-                    return False
-        rank = index//8
         file = index%8
+        if row(index) != 1:
+            for i in (-9,-7):
+                if row(index+i) == row(index-8) and index+i > -1:
+                    if board.board[index+i] in "K":
+                        return False
+            if board.board[index-8] == "K":
+                return False
+        if index < 63:
+            if row(index+1) == row(index):
+                if board.board[index+1] == "K":
+                    return False
+                
+        if index > 0:
+            if row(index-1) == row(index):
+                if board.board[index-1] == "K":
+                    return False
+        if row(index) != 8:
+            for i in (7,9):
+                if row(index+i) == row(index+8) and index+i <64:
+                    if board.board[index+i] in "KP":
+                        return False
+            if board.board[index+8] == "K":
+                return False
+        rank = index//8
         directions = [[1,2],[1,-2],[-1,2],[-1,-2],[2,1],[2,-1],[-2,1],[-2,-1]]
         for d in directions:
             new_file = file + d[0]
@@ -591,23 +674,38 @@ def check_legal(board,turn,move):
                         break
         
         return True
-    
 
-def in_check(board,turn):
-    #returns True if in check else False 
-    if turn == "W":
+def in_check(board):
+        #returns True if legal False if illegal
+    if board.white_to_move:
         index = np.argmax(board.board == "K")
-        file = (index//8)*8
-        for i in (-9,-7):
-            if file-8<= index + i <=file + 1:
-                if board.board[index+i] in "kp":
-                    return True
-        for i in (-8,-1,+1,+7,+8,+9):
-            if file<= index + i <=file + 7:
-                if board.board[index+i] == "k":
-                    return True
-        rank = index//8
         file = index%8
+
+        if row(index) != 1:
+            for i in (-9,-7):
+                if row(index+i) == row(index-8) and index+i > -1:
+                    if board.board[index+i] in "kp":
+                        return True
+            if board.board[index-8] == "k":
+                return True
+            
+        if index < 63:
+            if row(index+1) == row(index):
+                if board.board[index+1] == "k":
+                    return True
+                
+        if index > 0:
+            if row(index-1) == row(index):
+                if board.board[index-1] == "k":
+                    return True
+        if row(index) != 8:
+            for i in (7,9):
+                if row(index+i) == row(index+8) and index+i <64:
+                    if board.board[index+i] == "k":
+                        return True
+            if board.board[index+8] == "k":
+                return True
+        rank = index//8
         directions = [[1,2],[1,-2],[-1,2],[-1,-2],[2,1],[2,-1],[-2,1],[-2,-1]]
         for d in directions:
             new_file = file + d[0]
@@ -638,19 +736,34 @@ def in_check(board,turn):
                         return True
                     elif board.board[target] != ".":
                         break
+
     else:
         index = np.argmax(board.board == "k")
-        file = (index//8)*8
-        for i in (+9,+7):
-            if file+8<= index + i <=file + 15:
-                if board.board[index+i] in "KP":
-                    return True
-        for i in (-8,-1,+1,+7,+8,+9):
-            if file<= index + i <=file + 7:
-                if board.board[index+i] == "K":
-                    return True
-        rank = index//8
         file = index%8
+        if row(index) != 1:
+            for i in (-9,-7):
+                if row(index+i) == row(index-8) and index+i > -1:
+                    if board.board[index+i] in "K":
+                        return True
+            if board.board[index-8] == "K":
+                return True
+        if index < 63:
+            if row(index+1) == row(index):
+                if board.board[index+1] == "K":
+                    return True
+                
+        if index > 0:
+            if row(index-1) == row(index):
+                if board.board[index-1] == "K":
+                    return True
+        if row(index) != 8:
+            for i in (7,9):
+                if row(index+i) == row(index+8) and index+i <64:
+                    if board.board[index+i] in "KP":
+                        return True
+            if board.board[index+8] == "K":
+                return True
+        rank = index//8
         directions = [[1,2],[1,-2],[-1,2],[-1,-2],[2,1],[2,-1],[-2,1],[-2,-1]]
         for d in directions:
             new_file = file + d[0]
@@ -682,41 +795,11 @@ def in_check(board,turn):
                     elif board.board[target] != ".":
                         break
         
-        return False          
-            
-
-board = Board("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1")
+        return False
 
 
-#FEN GENERATION
 
-# rows = [board.board[i:i+8] for i in range(0, 64, 8)]
-# a=[]
-# for row in rows:
-#     string = ""
-#     empty=0
-#     for j in row:
-#         if j == ".":
-#             empty+=1
-#         else:
-#             if empty !=0:
-#                 string+=str(empty)
-#             empty = 0
-#             string+=j
-#     string+=str(empty) if empty !=0 else ""
-#     a.append(string)
-# fen="/".join(a) +" "
-# fen+= "w " if board.white_to_move else "b "
-# fen+="K" if board.white_king_moved is False and board.white_kingside_rook_moved is False else ""
-# fen+="Q" if board.white_king_moved is False and board.white_queenside_rook_moved is False else ""
-# fen+="k" if board.black_king_moved is False and board.black_kingside_rook_moved is False else ""
-# fen+="q" if board.black_king_moved is False and board.black_queenside_rook_moved is False else ""
-# fen+= " - "
-# fen+= f"{board.moves_since_capture} "
-# fen+= "6"
-# print(fen)
-
-
+#Print Board
 def print_board(b):
     for row in range(8):
         print(b.board[row*8:(row+1)*8])
@@ -731,8 +814,8 @@ def perft(position,depth):
     
     nodes = 0
     turn = "W" if position.white_to_move else "B"
-    position.in_check = in_check(position,turn)
-    moves = get_legal_moves(position,turn)
+    position.in_check = in_check(position)
+    moves = get_legal_moves(position)
     for move in moves:
         test_board = Board (None, 
                             position.board.copy(),
@@ -746,8 +829,8 @@ def perft(position,depth):
                             position.en_passant,
                             position.moves_since_capture
                             )
-        make_move(test_board,move,turn)
-        result = check_legal(test_board,turn,move)
+        make_move(test_board,move)
+        result = check_legal(test_board,move)
         if result is False:
             # print(move.start_sq,move.end_sq)
             # print_board(test_board)
@@ -757,20 +840,53 @@ def perft(position,depth):
     
     return nodes
 
-d = {
-    0: "a8", 1: "b8", 2: "c8", 3: "d8", 4: "e8", 5: "f8", 6: "g8", 7: "h8",
-    8: "a7", 9: "b7", 10: "c7", 11: "d7", 12: "e7", 13: "f7", 14: "g7", 15: "h7",
-    16: "a6", 17: "b6", 18: "c6", 19: "d6", 20: "e6", 21: "f6", 22: "g6", 23: "h6",
-    24: "a5", 25: "b5", 26: "c5", 27: "d5", 28: "e5", 29: "f5", 30: "g5", 31: "h5",
-    32: "a4", 33: "b4", 34: "c4", 35: "d4", 36: "e4", 37: "f4", 38: "g4", 39: "h4",
-    40: "a3", 41: "b3", 42: "c3", 43: "d3", 44: "e3", 45: "f3", 46: "g3", 47: "h3",
-    48: "a2", 49: "b2", 50: "c2", 51: "d2", 52: "e2", 53: "f2", 54: "g2", 55: "h2",
-    56: "a1", 57: "b1", 58: "c1", 59: "d1", 60: "e1", 61: "f1", 62: "g1", 63: "h1"
-}
+
+#FENS TEST
+
+# fens = {'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1': 197281, 'r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1': 4085603, '4k3/8/8/8/8/8/8/4K2R w K - 0 1': 7059, '4k3/8/8/8/8/8/8/R3K3 w Q - 0 1': 7626, '4k2r/8/8/8/8/8/8/4K3 w k - 0 1': 8290, 'r3k3/8/8/8/8/8/8/4K3 w q - 0 1': 8897, '4k3/8/8/8/8/8/8/R3K2R w KQ - 0 1': 17945, 'r3k2r/8/8/8/8/8/8/4K3 w kq - 0 1': 22180, '8/8/8/8/8/8/6k1/4K2R w K - 0 1': 2219, '8/8/8/8/8/8/1k6/R3K3 w Q - 0 1': 4573, '4k2r/6K1/8/8/8/8/8/8 w k - 0 1': 2073, 'r3k3/1K6/8/8/8/8/8/8 w q - 0 1': 3991, 'r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1': 314346, 'r3k2r/8/8/8/8/8/8/1R2K2R w Kkq - 0 1': 328965, 'r3k2r/8/8/8/8/8/8/2R1K2R w Kkq - 0 1': 312835, 'r3k2r/8/8/8/8/8/8/R3K1R1 w Qkq - 0 1': 316214, '1r2k2r/8/8/8/8/8/8/R3K2R w KQk - 0 1': 334705, '2r1k2r/8/8/8/8/8/8/R3K2R w KQk - 0 1': 317324, 'r3k1r1/8/8/8/8/8/8/R3K2R w KQq - 0 1': 320792, '4k3/8/8/8/8/8/8/4K2R b K - 0 1': 8290, '4k3/8/8/8/8/8/8/R3K3 b Q - 0 1': 8897, '4k2r/8/8/8/8/8/8/4K3 b k - 0 1': 7059, 'r3k3/8/8/8/8/8/8/4K3 b q - 0 1': 7626, '4k3/8/8/8/8/8/8/R3K2R b KQ - 0 1': 22180, 'r3k2r/8/8/8/8/8/8/4K3 b kq - 0 1': 17945, '8/8/8/8/8/8/6k1/4K2R b K - 0 1': 2073, '8/8/8/8/8/8/1k6/R3K3 b Q - 0 1': 3991, '4k2r/6K1/8/8/8/8/8/8 b k - 0 1': 2219, 'r3k3/1K6/8/8/8/8/8/8 b q - 0 1': 4573, 'r3k2r/8/8/8/8/8/8/R3K2R b KQkq - 0 1': 314346, 'r3k2r/8/8/8/8/8/8/1R2K2R b Kkq - 0 1': 334705, 'r3k2r/8/8/8/8/8/8/2R1K2R b Kkq - 0 1': 317324, 'r3k2r/8/8/8/8/8/8/R3K1R1 b Qkq - 0 1': 320792, '1r2k2r/8/8/8/8/8/8/R3K2R b KQk - 0 1': 328965, '2r1k2r/8/8/8/8/8/8/R3K2R b KQk - 0 1': 312835, 'r3k1r1/8/8/8/8/8/8/R3K2R b KQq - 0 1': 316214, '8/1n4N1/2k5/8/8/5K2/1N4n1/8 w - - 0 1': 38675, '8/1k6/8/5N2/8/4n3/8/2K5 w - - 0 1': 20534, '8/8/4k3/3Nn3/3nN3/4K3/8/8 w - - 0 1': 73584, 'K7/8/2n5/1n6/8/8/8/k6N w - - 0 1': 5301, 'k7/8/2N5/1N6/8/8/8/K6n w - - 0 1': 5910, '8/1n4N1/2k5/8/8/5K2/1N4n1/8 b - - 0 1': 40039, '8/1k6/8/5N2/8/4n3/8/2K5 b - - 0 1': 24640, '8/8/3K4/3Nn3/3nN3/4k3/8/8 b - - 0 1': 16199, 'K7/8/2n5/1n6/8/8/8/k6N b - - 0 1': 5910, 'k7/8/2N5/1N6/8/8/8/K6n b - - 0 1': 5301, 'B6b/8/8/8/2K5/4k3/8/b6B w - - 0 1': 76778, '8/8/1B6/7b/7k/8/2B1b3/7K w - - 0 1': 93338, 'k7/B7/1B6/1B6/8/8/8/K6b w - - 0 1': 32955, 'K7/b7/1b6/1b6/8/8/8/k6B w - - 0 1': 31787, 'B6b/8/8/8/2K5/5k2/8/b6B b - - 0 1': 31151, '8/8/1B6/7b/7k/8/2B1b3/7K b - - 0 1': 93603, 'k7/B7/1B6/1B6/8/8/8/K6b b - - 0 1': 31787, 'K7/b7/1b6/1b6/8/8/8/k6B b - - 0 1': 32955, '7k/RR6/8/8/8/8/rr6/7K w - - 0 1': 104342, 'R6r/8/8/2K5/5k2/8/8/r6R w - - 0 1': 771461, '7k/RR6/8/8/8/8/rr6/7K b - - 0 1': 104342, 'R6r/8/8/2K5/5k2/8/8/r6R b - - 0 1': 771368, '6kq/8/8/8/8/8/8/7K w - - 0 1': 3637, '6KQ/8/8/8/8/8/8/7k b - - 0 1': 3637, 'K7/8/8/3Q4/4q3/8/8/7k w - - 0 1': 8349, '6qk/8/8/8/8/8/8/7K b - - 0 1': 4167, 'K7/8/8/3Q4/4q3/8/8/7k b - - 0 1': 8349, '8/8/8/8/8/K7/P7/k7 w - - 0 1': 199, '8/8/8/8/8/7K/7P/7k w - - 0 1': 199, 'K7/p7/k7/8/8/8/8/8 w - - 0 1': 80, '7K/7p/7k/8/8/8/8/8 w - - 0 1': 80, '8/2k1p3/3pP3/3P2K1/8/8/8/8 w - - 0 1': 1091, '8/8/8/8/8/K7/P7/k7 b - - 0 1': 80, '8/8/8/8/8/7K/7P/7k b - - 0 1': 80, 'K7/p7/k7/8/8/8/8/8 b - - 0 1': 199, '7K/7p/7k/8/8/8/8/8 b - - 0 1': 199, '8/2k1p3/3pP3/3P2K1/8/8/8/8 b - - 0 1': 1091, '8/8/8/8/8/4k3/4P3/4K3 w - - 0 1': 282, '4k3/4p3/4K3/8/8/8/8/8 b - - 0 1': 282, '8/8/7k/7p/7P/7K/8/8 w - - 0 1': 360, '8/8/k7/p7/P7/K7/8/8 w - - 0 1': 360, '8/8/3k4/3p4/3P4/3K4/8/8 w - - 0 1': 1294, '8/3k4/3p4/8/3P4/3K4/8/8 w - - 0 1': 3213, '8/8/3k4/3p4/8/3P4/3K4/8 w - - 0 1': 3213, 'k7/8/3p4/8/3P4/8/8/7K w - - 0 1': 534, '8/8/7k/7p/7P/7K/8/8 b - - 0 1': 360, '8/8/k7/p7/P7/K7/8/8 b - - 0 1': 360, '8/8/3k4/3p4/3P4/3K4/8/8 b - - 0 1': 1294, '8/3k4/3p4/8/3P4/3K4/8/8 b - - 0 1': 3213, '8/8/3k4/3p4/8/3P4/3K4/8 b - - 0 1': 3213, 'k7/8/3p4/8/3P4/8/8/7K b - - 0 1': 537, '7k/3p4/8/8/3P4/8/8/K7 w - - 0 1': 720, '7k/8/8/3p4/8/8/3P4/K7 w - - 0 1': 716, 'k7/8/8/7p/6P1/8/8/K7 w - - 0 1': 877, 'k7/8/7p/8/8/6P1/8/K7 w - - 0 1': 637, 'k7/8/8/6p1/7P/8/8/K7 w - - 0 1': 877, 'k7/8/6p1/8/8/7P/8/K7 w - - 0 1': 637, 'k7/8/8/3p4/4p3/8/8/7K w - - 0 1': 573, 'k7/8/3p4/8/8/4P3/8/7K w - - 0 1': 637, '7k/3p4/8/8/3P4/8/8/K7 b - - 0 1': 720, '7k/8/8/3p4/8/8/3P4/K7 b - - 0 1': 712, 'k7/8/8/7p/6P1/8/8/K7 b - - 0 1': 877, 'k7/8/7p/8/8/6P1/8/K7 b - - 0 1': 637, 'k7/8/8/6p1/7P/8/8/K7 b - - 0 1': 877, 'k7/8/6p1/8/8/7P/8/K7 b - - 0 1': 637, 'k7/8/8/3p4/4p3/8/8/7K b - - 0 1': 569, 'k7/8/3p4/8/8/4P3/8/7K b - - 0 1': 637, '7k/8/8/p7/1P6/8/8/7K w - - 0 1': 877, '7k/8/p7/8/8/1P6/8/7K w - - 0 1': 637, '7k/8/8/1p6/P7/8/8/7K w - - 0 1': 877, '7k/8/1p6/8/8/P7/8/7K w - - 0 1': 637, 'k7/7p/8/8/8/8/6P1/K7 w - - 0 1': 1035, 'k7/6p1/8/8/8/8/7P/K7 w - - 0 1': 1035, '3k4/3pp3/8/8/8/8/3PP3/3K4 w - - 0 1': 2902, '7k/8/8/p7/1P6/8/8/7K b - - 0 1': 877, '7k/8/p7/8/8/1P6/8/7K b - - 0 1': 637, '7k/8/8/1p6/P7/8/8/7K b - - 0 1': 877, '7k/8/1p6/8/8/P7/8/7K b - - 0 1': 637, 'k7/7p/8/8/8/8/6P1/K7 b - - 0 1': 1035, 'k7/6p1/8/8/8/8/7P/K7 b - - 0 1': 1035, '3k4/3pp3/8/8/8/8/3PP3/3K4 b - - 0 1': 2902, '8/Pk6/8/8/8/8/6Kp/8 w - - 0 1': 8048, 'n1n5/1Pk5/8/8/8/8/5Kp1/5N1N w - - 0 1': 124608, '8/PPPk4/8/8/8/8/4Kppp/8 w - - 0 1': 79355, 'n1n5/PPPk4/8/8/8/8/4Kppp/5N1N w - - 0 1': 182838, '8/Pk6/8/8/8/8/6Kp/8 b - - 0 1': 8048, 'n1n5/1Pk5/8/8/8/8/5Kp1/5N1N b - - 0 1': 124608, '8/PPPk4/8/8/8/8/4Kppp/8 b - - 0 1': 79355, 'n1n5/PPPk4/8/8/8/8/4Kppp/5N1N b - - 0 1': 182838}
+# with open("FEN Testing Results.txt","w") as f:
+#     for fen in fens:
+#         board = Board(fen)
+#         board.in_check = in_check(board)
+#         moves = get_legal_moves(board)
+#         nodes = 0
+#         for move in moves:
+#             test_board = Board (None, 
+#                                     board.board.copy(),
+#                                     board.white_to_move,
+#                                     board.white_king_moved,
+#                                     board.white_kingside_rook_moved,
+#                                     board.white_queenside_rook_moved,
+#                                     board.black_king_moved,
+#                                     board.black_kingside_rook_moved,
+#                                     board.black_queenside_rook_moved,
+#                                     board.en_passant,
+#                                     board.moves_since_capture,
+#                                     board.in_check
+#                                     )
+#             make_move(test_board,move)
+#             result = check_legal(test_board,move)
+#             if result is False:
+#                 continue
+#             num = perft(test_board,3)
+#             nodes += num
+#             #print(f"{index_to_square[move.start_sq]}{index_to_square[move.end_sq]}{move.promote_to}: {num}")
+#         if nodes != fens[fen]:
+#             f.write(fen+": Error\n")
+#             f.flush()
+#         else:
+#             f.write(fen+": Success\n")
+#             f.flush()
+#     f.close()
 
 
-board.in_check = in_check(board,"W" if board.white_to_move else "B")
-moves = get_legal_moves(board,"W" if board.white_to_move else "B")
+
+
+
+t1 = t.perf_counter()
+board = Board("rnbqkb1r/ppppp1pp/7n/4Pp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 3")
+board.in_check = in_check(board)
+moves = get_legal_moves(board)
 nodes = 0
 for move in moves:
     test_board = Board (None, 
@@ -786,52 +902,15 @@ for move in moves:
                             board.moves_since_capture,
                             board.in_check
                             )
-    make_move(test_board,move,"W" if board.white_to_move else "B")
-    result = check_legal(test_board,"W" if board.white_to_move else "B",move)
+    make_move(test_board,move)
+    result = check_legal(test_board,move)
     if result is False:
-        print(move.start_sq,move.end_sq)
         continue
-    num = perft(test_board,3)
+    num = perft(test_board,4)
     nodes += num
-    print(f"{d[move.start_sq]}{d[move.end_sq]}: {num}")
+
+    #print(f"{index_to_square[move.start_sq]}{index_to_square[move.end_sq]}{move.promote_to}: {num}")
+
+t2=t.perf_counter()
 print(nodes)
-
-
-
-#CHECK LEGAL MOVE FUNCTION TESTING
-
-# moves = get_legal_moves(board,"B")
-# for move in moves:
-#     test_board = Board (None, 
-#                             board.board.copy(),
-#                             board.white_to_move,
-#                             board.white_king_moved,
-#                             board.white_kingside_rook_moved,
-#                             board.white_queenside_rook_moved,
-#                             board.black_king_moved,
-#                             board.black_kingside_rook_moved,
-#                             board.black_queenside_rook_moved,
-#                             board.en_passant,
-#                             board.moves_since_capture
-#                             )
-#     make_move(test_board,move,"B")
-#     a = check_legal(test_board,"B")
-#     if a is False:
-#         print(f"{d[move.start_sq]}{d[move.end_sq]}")
-
-
-# May be helpful for debugging
-# def print_board(b):
-#     for row in range(8):
-#         print(b.board[row*8:(row+1)*8])
-#     print()
-
-
-# make_move(board,Move(27,18,"EnPassant"),"W" if board.white_to_move else "B")
-# print_board(board)
-# print(board.white_king_moved)
-# print(board.white_kingside_rook_moved)
-# print(board.white_queenside_rook_moved)
-# print(board.black_king_moved)
-# print(board.black_kingside_rook_moved)
-# print(board.black_queenside_rook_moved)
+print(nodes/(t2-t1))
