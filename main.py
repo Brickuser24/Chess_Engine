@@ -1,9 +1,8 @@
 import numpy as np
 import time as t
 
-#NOTES
-#REPLACE "Promotion" with PROMOTION = "Promotion"
-
+#Notes
+#Replace pieces and empty squares with integers
 
 square_to_index = {
   "a8": 0, "b8": 1, "c8": 2, "d8": 3, "e8": 4, "f8": 5, "g8": 6, "h8": 7,
@@ -34,14 +33,14 @@ class Board():
                  en_passant = None,moves_since_capture = None,in_check = None):
         if fen is None:
             self.board = np.array([
-                "r","n","b","q","k","b","n","r",        #  0  1  2  3  4  5  6  7
-                "p","p","p","p","p","p","p","p",        #  8  9 10 11 12 13 14 15
-                ".",".",".",".",".",".",".",".",        # 16 17 18 19 20 21 22 23
-                ".",".",".",".",".",".",".",".",        # 24 25 26 27 28 29 30 31
-                ".",".",".",".",".",".",".",".",        # 32 33 34 35 36 37 38 39
-                ".",".",".",".",".",".",".",".",        # 40 41 42 43 44 45 46 47
-                "P","P","P","P","P","P","P","P",        # 48 49 50 51 52 53 54 55
-                "R","N","B","Q","K","B","N","R"         # 56 57 58 59 60 61 62 63
+            ".",".",".",".",".",".",".",".",        # 16 17 18 19 20 21 22 23
+            ".",".",".",".",".",".",".",".",        # 24 25 26 27 28 29 30 31
+            ".",".",".",".",".",".",".",".",        # 16 17 18 19 20 21 22 23
+            ".",".",".",".",".",".",".",".",        # 24 25 26 27 28 29 30 31
+            ".",".",".",".",".",".",".",".",        # 32 33 34 35 36 37 38 39
+            ".",".","k",".",".",".",".",".",        # 40 41 42 43 44 45 46 47
+            ".",".",".",".",".",".","r",".",        # 16 17 18 19 20 21 22 23
+            ".","K",".",".",".",".",".",".",        # 24 25 26 27 28 29 30 31
             ]) if board is None else board
             
             #Starting Board
@@ -339,6 +338,7 @@ def castling(board):
     return legal_moves
 
 def get_legal_moves(board):
+    board.in_check = in_check(board)
     legal_moves = []
     if board.white_to_move:
         for index in range(len(board.board)):
@@ -380,6 +380,7 @@ def get_legal_moves(board):
     return legal_moves
 
 def make_move(board,move):
+    board.in_check = in_check(board)
     if move.type == "Promotion":
         board.board[move.end_sq] = move.promote_to
         board.board[move.start_sq] = "."
@@ -704,7 +705,7 @@ def check_legal(board,move):
                 else:
                     break
         
-        return True     
+    return True     
 
 def in_check(board):
     #returns True if in check else False
@@ -833,110 +834,94 @@ def in_check(board):
                     break
         
         return False   
-    
-#board = Board()
 
-#PERFT TEST
+pst = {"P" : np.array([0, 0, 0, 0, 0, 0, 0, 0, 98, 134, 61, 95, 68, 126, 34, -11, -6, 7, 26, 31, 65, 56, 25, -20, -14, 13, 6, 21, 23, 12, 17, -23, -27, -2, -5, 12, 17, 6, 10, -25, -26, -4, -4, -10, 3, 3, 33, -12, -35, -1, -20, -23, -15, 24, 38, -22, 0, 0, 0, 0, 0, 0, 0, 0]),
+          "p" : np.array([0, 0, 0, 0, 0, 0, 0, 0, -35, -1, -20, -23, -15, 24, 38, -22, -26, -4, -4, -10, 3, 3, 33, -12, -27, -2, -5, 12, 17, 6, 10, -25, -14, 13, 6, 21, 23, 12, 17, -23, -6, 7, 26, 31, 65, 56, 25, -20, 98, 134, 61, 95, 68, 126, 34, -11, 0, 0, 0, 0, 0, 0, 0, 0]),
+          "N" : np.array([-167, -89, -34, -49, 61, -97, -15, -107, -73, -41, 72, 36, 23, 62, 7, -17, -47, 60, 37, 65, 84, 129, 73, 44, -9, 17, 19, 53, 37, 69, 18, 22, -13, 4, 16, 13, 28, 19, 21, -8, -23, -9, 12, 10, 19, 17, 25, -16, -29, -53, -12, -3, -1, 18, -14, -19, -105, -21, -58, -33, -17, -28, -19, -230]),
+          "n" : np.array([-105, -21, -58, -33, -17, -28, -19, -230, -29, -53, -12, -3, -1, 18, -14, -19, -23, -9, 12, 10, 19, 17, 25, -16, -13, 4, 16, 13, 28, 19, 21, -8, -9, 17, 19, 53, 37, 69, 18, 22, -47, 60, 37, 65, 84, 129, 73, 44, -73, -41, 72, 36, 23, 62, 7, -17, -167, -89, -34, -49, 61, -97, -15, -107]),
+          "B" : np.array([-29, 4, -82, -37, -25, -42, 7, -8, -26, 16, -18, -13, 30, 59, 18, -47, -16, 37, 43, 40, 35, 50, 37, -2, -4, 5, 19, 50, 37, 37, 7, -2, -6, 13, 13, 26, 34, 12, 10, 4, 0, 15, 15, 15, 14, 27, 18, 10, 4, 15, 16, 0, 7, 21, 33, 1, -33, -3, -14, -21, -13, -12, -39, -21]),
+          "b" : np.array([-33, -3, -14, -21, -13, -12, -39, -21, 4, 15, 16, 0, 7, 21, 33, 1, 0, 15, 15, 15, 14, 27, 18, 10, -6, 13, 13, 26, 34, 12, 10, 4, -4, 5, 19, 50, 37, 37, 7, -2, -16, 37, 43, 40, 35, 50, 37, -2, -26, 16, -18, -13, 30, 59, 18, -47, -29, 4, -82, -37, -25, -42, 7, -8]),
+          "R" : np.array([32, 42, 32, 51, 63, 9, 31, 43, 27, 32, 58, 62, 80, 67, 26, 44, -5, 19, 26, 36, 17, 45, 61, 16, -24, -11, 7, 26, 24, 35, -8, -20, -36, -26, -12, -1, 9, -7, 6, -23, -45, -25, -16, -17, 3, 0, -5, -33, -44, -16, -20, -9, -1, 11, -6, -71, -19, -13, 1, 17, 16, 7, -37, -26]),
+          "r" : np.array([-19, -13, 1, 17, 16, 7, -37, -26, -44, -16, -20, -9, -1, 11, -6, -71, -45, -25, -16, -17, 3, 0, -5, -33, -36, -26, -12, -1, 9, -7, 6, -23, -24, -11, 7, 26, 24, 35, -8, -20, -5, 19, 26, 36, 17, 45, 61, 16, 27, 32, 58, 62, 80, 67, 26, 44, 32, 42, 32, 51, 63, 9, 31, 43]),
+          "Q" : np.array([-28, 0, 29, 12, 59, 44, 43, 45, -24, -39, -5, 1, -16, 57, 28, 54, -13, -17, 7, 8, 29, 56, 47, 57, -27, -27, -16, -16, -1, 17, -2, 1, -9, -26, -9, -10, -2, -4, 3, -3, -14, 2, -11, -2, -5, 2, 14, 5, -35, -8, 11, 2, 8, 15, -3, 1, -1, -18, -9, 10, -15, -25, -31, -50]),
+          "q" : np.array([-1, -18, -9, 10, -15, -25, -31, -50, -35, -8, 11, 2, 8, 15, -3, 1, -14, 2, -11, -2, -5, 2, 14, 5, -9, -26, -9, -10, -2, -4, 3, -3, -27, -27, -16, -16, -1, 17, -2, 1, -13, -17, 7, 8, 29, 56, 47, 57, -24, -39, -5, 1, -16, 57, 28, 54, -28, 0, 29, 12, 59, 44, 43, 45]),
+          "K" : np.array([-65, 23, 16, -15, -56, -34, 2, 13, 29, -1, -20, -7, -8, -4, -38, -29, -9, 24, 2, -16, -20, 6, 22, -22, -17, -20, -12, -27, -30, -25, -14, -36, -49, -1, -27, -39, -46, -44, -33, -51, -14, -14, -22, -46, -44, -30, -15, -27, 1, 7, -8, -64, -43, -16, 9, 8, -15, 36, 12, -54, 8, -28, 24, 14]),
+          "k" : np.array([-15, 36, 12, -54, 8, -28, 24, 14, 1, 7, -8, -64, -43, -16, 9, 8, -14, -14, -22, -46, -44, -30, -15, -27, -49, -1, -27, -39, -46, -44, -33, -51, -17, -20, -12, -27, -30, -25, -14, -36, -9, 24, 2, -16, -20, 6, 22, -22, 29, -1, -20, -7, -8, -4, -38, -29, -65, 23, 16, -15, -56, -34, 2, 13])
+          }
 
-def perft(position,depth):
+piece_value = {"p" : 82, "n": 337, "b" : 365, "r" : 477, "q" : 1025, "k" : 1000000}
+def evaluate(board):
+    white_score = 0
+    black_score = 0
+    for i in range(0,64):
+        if is_empty(board.board[i]) is False:
+            if board.board[i].isupper():
+                white_score += piece_value[board.board[i].lower()]
+                white_score += pst[board.board[i]][i]
+            else:
+                black_score += piece_value[board.board[i]]
+                black_score += pst[board.board[i]][i]
+    return (white_score-black_score)/100
+
+board = Board("rnb1k1nr/ppp2ppp/8/4P3/1BP5/3q4/PP2KpPP/RN1Q1BNR w kq - 0 1")
+
+def negamax(board,depth,ply,alpha,beta):
     if depth == 0:
-        return 1
-    
-    nodes = 0
-    turn = "W" if position.white_to_move else "B"
-    position.in_check = in_check(position)
-    moves = get_legal_moves(position)
+        return evaluate(board),None
+
+    max_eval = -10000000000 
+    best_move = None
+    searched = 0
+    moves = get_legal_moves(board)
     for move in moves:
-        test_board = Board (None, 
-                            position.board.copy(),
-                            position.white_to_move,
-                            position.white_king_moved,
-                            position.white_kingside_rook_moved,
-                            position.white_queenside_rook_moved,
-                            position.black_king_moved,
-                            position.black_kingside_rook_moved,
-                            position.black_queenside_rook_moved,
-                            position.en_passant,
-                            position.moves_since_capture
-                            )
-        make_move(test_board,move)
-        result = check_legal(test_board,move)
-        if result is False:
-            # print(move.start_sq,move.end_sq)
-            # print_board(test_board)
-            # t.sleep(3)
+        test_board = Board(None,
+                            board.board.copy(),
+                            board.white_to_move,
+                            board.white_king_moved,
+                            board.white_kingside_rook_moved,
+                            board.white_queenside_rook_moved,
+                            board.black_king_moved,
+                            board.black_kingside_rook_moved,
+                            board.black_queenside_rook_moved,
+                            board.en_passant,
+                            board.moves_since_capture,
+                            board.in_check)
+        make_move(test_board, move)
+        result = check_legal(test_board, move)
+        if not result:
             continue
-        nodes += perft(test_board, depth - 1)
-    
-    return nodes
+        searched += 1
+        eval, _ =  negamax(test_board, depth-1, ply+1, -beta, -alpha)
+        eval = -eval
 
-
-#FENS TEST
-t1 = t.perf_counter()
-fens = {'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1': 197281, 'r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1': 4085603, '4k3/8/8/8/8/8/8/4K2R w K - 0 1': 7059, '4k3/8/8/8/8/8/8/R3K3 w Q - 0 1': 7626, '4k2r/8/8/8/8/8/8/4K3 w k - 0 1': 8290, 'r3k3/8/8/8/8/8/8/4K3 w q - 0 1': 8897, '4k3/8/8/8/8/8/8/R3K2R w KQ - 0 1': 17945, 'r3k2r/8/8/8/8/8/8/4K3 w kq - 0 1': 22180, '8/8/8/8/8/8/6k1/4K2R w K - 0 1': 2219, '8/8/8/8/8/8/1k6/R3K3 w Q - 0 1': 4573, '4k2r/6K1/8/8/8/8/8/8 w k - 0 1': 2073, 'r3k3/1K6/8/8/8/8/8/8 w q - 0 1': 3991, 'r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1': 314346, 'r3k2r/8/8/8/8/8/8/1R2K2R w Kkq - 0 1': 328965, 'r3k2r/8/8/8/8/8/8/2R1K2R w Kkq - 0 1': 312835, 'r3k2r/8/8/8/8/8/8/R3K1R1 w Qkq - 0 1': 316214, '1r2k2r/8/8/8/8/8/8/R3K2R w KQk - 0 1': 334705, '2r1k2r/8/8/8/8/8/8/R3K2R w KQk - 0 1': 317324, 'r3k1r1/8/8/8/8/8/8/R3K2R w KQq - 0 1': 320792, '4k3/8/8/8/8/8/8/4K2R b K - 0 1': 8290, '4k3/8/8/8/8/8/8/R3K3 b Q - 0 1': 8897, '4k2r/8/8/8/8/8/8/4K3 b k - 0 1': 7059, 'r3k3/8/8/8/8/8/8/4K3 b q - 0 1': 7626, '4k3/8/8/8/8/8/8/R3K2R b KQ - 0 1': 22180, 'r3k2r/8/8/8/8/8/8/4K3 b kq - 0 1': 17945, '8/8/8/8/8/8/6k1/4K2R b K - 0 1': 2073, '8/8/8/8/8/8/1k6/R3K3 b Q - 0 1': 3991, '4k2r/6K1/8/8/8/8/8/8 b k - 0 1': 2219, 'r3k3/1K6/8/8/8/8/8/8 b q - 0 1': 4573, 'r3k2r/8/8/8/8/8/8/R3K2R b KQkq - 0 1': 314346, 'r3k2r/8/8/8/8/8/8/1R2K2R b Kkq - 0 1': 334705, 'r3k2r/8/8/8/8/8/8/2R1K2R b Kkq - 0 1': 317324, 'r3k2r/8/8/8/8/8/8/R3K1R1 b Qkq - 0 1': 320792, '1r2k2r/8/8/8/8/8/8/R3K2R b KQk - 0 1': 328965, '2r1k2r/8/8/8/8/8/8/R3K2R b KQk - 0 1': 312835, 'r3k1r1/8/8/8/8/8/8/R3K2R b KQq - 0 1': 316214, '8/1n4N1/2k5/8/8/5K2/1N4n1/8 w - - 0 1': 38675, '8/1k6/8/5N2/8/4n3/8/2K5 w - - 0 1': 20534, '8/8/4k3/3Nn3/3nN3/4K3/8/8 w - - 0 1': 73584, 'K7/8/2n5/1n6/8/8/8/k6N w - - 0 1': 5301, 'k7/8/2N5/1N6/8/8/8/K6n w - - 0 1': 5910, '8/1n4N1/2k5/8/8/5K2/1N4n1/8 b - - 0 1': 40039, '8/1k6/8/5N2/8/4n3/8/2K5 b - - 0 1': 24640, '8/8/3K4/3Nn3/3nN3/4k3/8/8 b - - 0 1': 16199, 'K7/8/2n5/1n6/8/8/8/k6N b - - 0 1': 5910, 'k7/8/2N5/1N6/8/8/8/K6n b - - 0 1': 5301, 'B6b/8/8/8/2K5/4k3/8/b6B w - - 0 1': 76778, '8/8/1B6/7b/7k/8/2B1b3/7K w - - 0 1': 93338, 'k7/B7/1B6/1B6/8/8/8/K6b w - - 0 1': 32955, 'K7/b7/1b6/1b6/8/8/8/k6B w - - 0 1': 31787, 'B6b/8/8/8/2K5/5k2/8/b6B b - - 0 1': 31151, '8/8/1B6/7b/7k/8/2B1b3/7K b - - 0 1': 93603, 'k7/B7/1B6/1B6/8/8/8/K6b b - - 0 1': 31787, 'K7/b7/1b6/1b6/8/8/8/k6B b - - 0 1': 32955, '7k/RR6/8/8/8/8/rr6/7K w - - 0 1': 104342, 'R6r/8/8/2K5/5k2/8/8/r6R w - - 0 1': 771461, '7k/RR6/8/8/8/8/rr6/7K b - - 0 1': 104342, 'R6r/8/8/2K5/5k2/8/8/r6R b - - 0 1': 771368, '6kq/8/8/8/8/8/8/7K w - - 0 1': 3637, '6KQ/8/8/8/8/8/8/7k b - - 0 1': 3637, 'K7/8/8/3Q4/4q3/8/8/7k w - - 0 1': 8349, '6qk/8/8/8/8/8/8/7K b - - 0 1': 4167, 'K7/8/8/3Q4/4q3/8/8/7k b - - 0 1': 8349, '8/8/8/8/8/K7/P7/k7 w - - 0 1': 199, '8/8/8/8/8/7K/7P/7k w - - 0 1': 199, 'K7/p7/k7/8/8/8/8/8 w - - 0 1': 80, '7K/7p/7k/8/8/8/8/8 w - - 0 1': 80, '8/2k1p3/3pP3/3P2K1/8/8/8/8 w - - 0 1': 1091, '8/8/8/8/8/K7/P7/k7 b - - 0 1': 80, '8/8/8/8/8/7K/7P/7k b - - 0 1': 80, 'K7/p7/k7/8/8/8/8/8 b - - 0 1': 199, '7K/7p/7k/8/8/8/8/8 b - - 0 1': 199, '8/2k1p3/3pP3/3P2K1/8/8/8/8 b - - 0 1': 1091, '8/8/8/8/8/4k3/4P3/4K3 w - - 0 1': 282, '4k3/4p3/4K3/8/8/8/8/8 b - - 0 1': 282, '8/8/7k/7p/7P/7K/8/8 w - - 0 1': 360, '8/8/k7/p7/P7/K7/8/8 w - - 0 1': 360, '8/8/3k4/3p4/3P4/3K4/8/8 w - - 0 1': 1294, '8/3k4/3p4/8/3P4/3K4/8/8 w - - 0 1': 3213, '8/8/3k4/3p4/8/3P4/3K4/8 w - - 0 1': 3213, 'k7/8/3p4/8/3P4/8/8/7K w - - 0 1': 534, '8/8/7k/7p/7P/7K/8/8 b - - 0 1': 360, '8/8/k7/p7/P7/K7/8/8 b - - 0 1': 360, '8/8/3k4/3p4/3P4/3K4/8/8 b - - 0 1': 1294, '8/3k4/3p4/8/3P4/3K4/8/8 b - - 0 1': 3213, '8/8/3k4/3p4/8/3P4/3K4/8 b - - 0 1': 3213, 'k7/8/3p4/8/3P4/8/8/7K b - - 0 1': 537, '7k/3p4/8/8/3P4/8/8/K7 w - - 0 1': 720, '7k/8/8/3p4/8/8/3P4/K7 w - - 0 1': 716, 'k7/8/8/7p/6P1/8/8/K7 w - - 0 1': 877, 'k7/8/7p/8/8/6P1/8/K7 w - - 0 1': 637, 'k7/8/8/6p1/7P/8/8/K7 w - - 0 1': 877, 'k7/8/6p1/8/8/7P/8/K7 w - - 0 1': 637, 'k7/8/8/3p4/4p3/8/8/7K w - - 0 1': 573, 'k7/8/3p4/8/8/4P3/8/7K w - - 0 1': 637, '7k/3p4/8/8/3P4/8/8/K7 b - - 0 1': 720, '7k/8/8/3p4/8/8/3P4/K7 b - - 0 1': 712, 'k7/8/8/7p/6P1/8/8/K7 b - - 0 1': 877, 'k7/8/7p/8/8/6P1/8/K7 b - - 0 1': 637, 'k7/8/8/6p1/7P/8/8/K7 b - - 0 1': 877, 'k7/8/6p1/8/8/7P/8/K7 b - - 0 1': 637, 'k7/8/8/3p4/4p3/8/8/7K b - - 0 1': 569, 'k7/8/3p4/8/8/4P3/8/7K b - - 0 1': 637, '7k/8/8/p7/1P6/8/8/7K w - - 0 1': 877, '7k/8/p7/8/8/1P6/8/7K w - - 0 1': 637, '7k/8/8/1p6/P7/8/8/7K w - - 0 1': 877, '7k/8/1p6/8/8/P7/8/7K w - - 0 1': 637, 'k7/7p/8/8/8/8/6P1/K7 w - - 0 1': 1035, 'k7/6p1/8/8/8/8/7P/K7 w - - 0 1': 1035, '3k4/3pp3/8/8/8/8/3PP3/3K4 w - - 0 1': 2902, '7k/8/8/p7/1P6/8/8/7K b - - 0 1': 877, '7k/8/p7/8/8/1P6/8/7K b - - 0 1': 637, '7k/8/8/1p6/P7/8/8/7K b - - 0 1': 877, '7k/8/1p6/8/8/P7/8/7K b - - 0 1': 637, 'k7/7p/8/8/8/8/6P1/K7 b - - 0 1': 1035, 'k7/6p1/8/8/8/8/7P/K7 b - - 0 1': 1035, '3k4/3pp3/8/8/8/8/3PP3/3K4 b - - 0 1': 2902, '8/Pk6/8/8/8/8/6Kp/8 w - - 0 1': 8048, 'n1n5/1Pk5/8/8/8/8/5Kp1/5N1N w - - 0 1': 124608, '8/PPPk4/8/8/8/8/4Kppp/8 w - - 0 1': 79355, 'n1n5/PPPk4/8/8/8/8/4Kppp/5N1N w - - 0 1': 182838, '8/Pk6/8/8/8/8/6Kp/8 b - - 0 1': 8048, 'n1n5/1Pk5/8/8/8/8/5Kp1/5N1N b - - 0 1': 124608, '8/PPPk4/8/8/8/8/4Kppp/8 b - - 0 1': 79355, 'n1n5/PPPk4/8/8/8/8/4Kppp/5N1N b - - 0 1': 182838}
-with open("FEN Testing Results.txt","w") as f:
-    for fen in fens:
-        board = Board(fen)
-        board.in_check = in_check(board)
-        moves = get_legal_moves(board)
-        nodes = 0
-        for move in moves:
-            test_board = Board (None, 
-                                    board.board.copy(),
-                                    board.white_to_move,
-                                    board.white_king_moved,
-                                    board.white_kingside_rook_moved,
-                                    board.white_queenside_rook_moved,
-                                    board.black_king_moved,
-                                    board.black_kingside_rook_moved,
-                                    board.black_queenside_rook_moved,
-                                    board.en_passant,
-                                    board.moves_since_capture,
-                                    board.in_check
-                                    )
-            make_move(test_board,move)
-            result = check_legal(test_board,move)
-            if result is False:
-                continue
-            num = perft(test_board,3)
-            nodes += num
-            #print(f"{index_to_square[move.start_sq]}{index_to_square[move.end_sq]}{move.promote_to}: {num}")
-        if nodes != fens[fen]:
-            f.write(fen+": Error\n")
-            f.flush()
+        if eval > max_eval:
+            max_eval = eval
+            best_move = move
+        
+        alpha = max(alpha, max_eval)
+        if beta <= alpha:
+            break 
+    if searched == 0:
+        if not board.in_check:
+            return 0, None
         else:
-            f.write(fen+": Success\n")
-            f.flush()
-    f.close()
-t2 = t.perf_counter()
-print(t2-t1)
+            return -10000000000+ply,None
+    return max_eval, best_move
+
+# types = ["Push","Double_Push","Capture","Castling","En_Passant"]
+# while True:
+#     a = negamax(board,4,-float('inf'),float('inf'))
+#     print(a[0],index_to_square[a[1].start_sq]+index_to_square[a[1].end_sq])
+#     make_move(board,a[1])
+#     print()
+#     start_sq = input("Start_sq: ")
+#     end_sq = input("End_sq: ")
+#     type = int(input("1: Push\n2: Double_Push\n3: Capture\n4: Castling\n5: En_Passant\n"))
+#     type_ = types[type-1]
+#     promote_to = input("Promote to: ")
+#     make_move(board,Move(square_to_index[start_sq],square_to_index[end_sq],type_,promote_to))
+#     print()
 
 
-# board = Board("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1")
-# board.in_check = in_check(board)
-# moves = get_legal_moves(board)
-# nodes = 0
-# for move in moves:
-#     test_board = Board (None, 
-#                             board.board.copy(),
-#                             board.white_to_move,
-#                             board.white_king_moved,
-#                             board.white_kingside_rook_moved,
-#                             board.white_queenside_rook_moved,
-#                             board.black_king_moved,
-#                             board.black_kingside_rook_moved,
-#                             board.black_queenside_rook_moved,
-#                             board.en_passant,
-#                             board.moves_since_capture,
-#                             board.in_check
-#                             )
-#     make_move(test_board,move)
-#     result = check_legal(test_board,move)
-#     if result is False:
-#         continue
-#     num = perft(test_board,3)
-#     nodes += num
-
-#     print(f"{index_to_square[move.start_sq]}{index_to_square[move.end_sq]}{move.promote_to}: {num}")
-
-# print(nodes)
+a = negamax(board,4,0,-10000000000,10000000000)
+print(a[0],index_to_square[a[1].start_sq]+index_to_square[a[1].end_sq])
