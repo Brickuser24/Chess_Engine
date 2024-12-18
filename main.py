@@ -3,6 +3,51 @@ import time as t
 
 #Notes
 #Replace pieces and empty squares with integers
+#Combine if statements like these in the get_move functions
+                # if board.white_to_move:
+                #     if board.board[target].islower():
+                #         legal_moves.append(Move(index,target,"Capture"))
+#Replace 
+# if in_bounds(new_file) and in_bounds(new_rank):   #Check if square in board
+#             target = new_file + new_rank*8
+#             more indented code
+# with    
+# if !in_bounds(new_file) or !in_bounds(new_rank):
+#     continue;
+#normal code
+#
+#Type Hints
+#lame = 3 bad
+#lame: int = 3 good
+#     directions = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]]
+#     for d in directions:    #Move in all 8 directions for Queen
+# Can you decompose that into for (dx, dy) in directions:
+#Remove d[0],d[1] replace with this
+
+#Remove type category in move
+#Replace en_passant, castling logic in make_move with if conditions or smth
+
+#Replace Max_eval with highest_eval or best_eval  in negamax search 
+
+# def main():
+#     pass
+
+# if __name__ == "__main__":
+#     main()
+# Do this
+# If I remember that correctly
+# Don't just throw code onto the highest level(?) so it runs
+# a = negamax(board,4,0,-10000000000,10000000000)
+# print(a[0],index_to_square[a[1].start_sq]+index_to_square[a[1].end_sq])
+
+#Change board.board to smth else. Game.position?
+
+#rename get_legal_moves to get_pseudo_legal_moves
+
+#call is_legal function inside make_move function and then make_move returns legality
+
+#replace eval with score in negamax
+
 
 square_to_index = {
   "a8": 0, "b8": 1, "c8": 2, "d8": 3, "e8": 4, "f8": 5, "g8": 6, "h8": 7,
@@ -861,52 +906,56 @@ def evaluate(board):
             else:
                 black_score += piece_value[board.board[i]]
                 black_score += pst[board.board[i]][i]
-    return (white_score-black_score)/100
+    return (white_score-black_score)/100 if board.white_to_move else -(white_score-black_score)/100
 
-board = Board("rnb1k1nr/ppp2ppp/8/4P3/1BP5/3q4/PP2KpPP/RN1Q1BNR w kq - 0 1")
+board = Board("rnbqk1nr/ppp2ppp/8/4P3/1BP5/8/PP2KpPP/RN1Q1BNR b kq - 0 1")
 
-def negamax(board,depth,ply,alpha,beta):
+def negamax(board, depth, ply, alpha, beta):
     if depth == 0:
-        return evaluate(board),None
-
+        return evaluate(board), None, []
     max_eval = -10000000000 
     best_move = None
+    best_line = []  
     searched = 0
     moves = get_legal_moves(board)
+    
     for move in moves:
         test_board = Board(None,
-                            board.board.copy(),
-                            board.white_to_move,
-                            board.white_king_moved,
-                            board.white_kingside_rook_moved,
-                            board.white_queenside_rook_moved,
-                            board.black_king_moved,
-                            board.black_kingside_rook_moved,
-                            board.black_queenside_rook_moved,
-                            board.en_passant,
-                            board.moves_since_capture,
-                            board.in_check)
+                           board.board.copy(),
+                           board.white_to_move,
+                           board.white_king_moved,
+                           board.white_kingside_rook_moved,
+                           board.white_queenside_rook_moved,
+                           board.black_king_moved,
+                           board.black_kingside_rook_moved,
+                           board.black_queenside_rook_moved,
+                           board.en_passant,
+                           board.moves_since_capture,
+                           board.in_check)
         make_move(test_board, move)
         result = check_legal(test_board, move)
         if not result:
             continue
         searched += 1
-        eval, _ =  negamax(test_board, depth-1, ply+1, -beta, -alpha)
+        eval, _, line = negamax(test_board, depth-1, ply+1, -beta, -alpha)  
         eval = -eval
 
         if eval > max_eval:
             max_eval = eval
             best_move = move
+            best_line = [move] + line 
         
         alpha = max(alpha, max_eval)
         if beta <= alpha:
             break 
+    
     if searched == 0:
         if not board.in_check:
-            return 0, None
+            return 0, None, [] 
         else:
-            return -10000000000+ply,None
-    return max_eval, best_move
+            return -10000000000 + ply, None, [] 
+
+    return max_eval, best_move, best_line  
 
 # types = ["Push","Double_Push","Capture","Castling","En_Passant"]
 # while True:
@@ -925,3 +974,9 @@ def negamax(board,depth,ply,alpha,beta):
 
 a = negamax(board,4,0,-10000000000,10000000000)
 print(a[0],index_to_square[a[1].start_sq]+index_to_square[a[1].end_sq])
+print("Best Line:")
+for i in a[2]:
+    print(index_to_square[i.start_sq]+index_to_square[i.end_sq])
+for i in a[2]:
+    make_move(board,i)
+print(evaluate(board))
