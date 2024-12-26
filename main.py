@@ -16,6 +16,23 @@ class pieces (Enum):
     BLACK_KING: int = 11
     EMPTY_SQUARE: int = 12
 
+str_to_enum = {
+    "P": pieces.WHITE_PAWN,
+    "p": pieces.BLACK_PAWN,
+    "R": pieces.WHITE_ROOK,
+    "r": pieces.BLACK_ROOK,
+    "N": pieces.WHITE_KNIGHT,
+    "n": pieces.BLACK_KNIGHT,
+    "B": pieces.WHITE_BISHOP,
+    "b": pieces.BLACK_BISHOP,
+    "Q": pieces.WHITE_QUEEN,
+    "q": pieces.BLACK_QUEEN,
+    "K": pieces.WHITE_KING,
+    "k": pieces.BLACK_KING,
+}
+
+enum_to_str = ["P","p","N","n","B","n","R","r","Q","q","K","k","."]
+
 def Parse_FEN(fen):
     fields: list = fen.split(" ")
     position: list = [pieces.EMPTY_SQUARE] * 64 
@@ -28,30 +45,8 @@ def Parse_FEN(fen):
             elif char.isdigit():
                 index+= int(char)
                 continue
-            elif char == "P":
-                position[index] = pieces.WHITE_PAWN
-            elif char == "p":
-                position[index] = pieces.BLACK_PAWN
-            elif char == "N":
-                position[index] = pieces.WHITE_KNIGHT
-            elif char == "n":
-                position[index] = pieces.BLACK_KNIGHT
-            elif char == "B":
-                position[index] = pieces.WHITE_BISHOP
-            elif char == "b":
-                position[index] = pieces.BLACK_BISHOP
-            elif char == "R":
-                position[index] = pieces.WHITE_ROOK
-            elif char == "r":
-                position[index] = pieces.BLACK_ROOK
-            elif char == "Q":
-                position[index] = pieces.WHITE_QUEEN
-            elif char == "q":
-                position[index] = pieces.BLACK_QUEEN
-            elif char == "K":
-                position[index] = pieces.WHITE_KING
             else:
-                position[index] = pieces.BLACK_KING
+                position[index] = str_to_enum[char]
             index +=1
 
     return position, fields[1], fields[2], fields[3], fields[4]
@@ -570,23 +565,6 @@ def search(board):
             best_move = move
     return best_move
 
-str_to_enum = {
-    "P": pieces.WHITE_PAWN,
-    "p": pieces.BLACK_PAWN,
-    "R": pieces.WHITE_ROOK,
-    "r": pieces.BLACK_ROOK,
-    "N": pieces.WHITE_KNIGHT,
-    "n": pieces.BLACK_KNIGHT,
-    "B": pieces.WHITE_BISHOP,
-    "b": pieces.BLACK_BISHOP,
-    "Q": pieces.WHITE_QUEEN,
-    "q": pieces.BLACK_QUEEN,
-    "K": pieces.WHITE_KING,
-    "k": pieces.BLACK_KING,
-}
-
-enum_to_str = ["P","p","N","n","B","n","R","r","Q","q","K","k","."]
-
 def UCI():
     board = create_board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
     while True:
@@ -636,7 +614,7 @@ def UCI():
         elif command == "printboard":
             for i in range(0,64,8):
                 for j in board.position[i:i+8]:
-                    print(enum_to_str[j], end = " ")
+                    print(enum_to_str[j.value], end = " ")
                 print("")
         else:
             pass    
